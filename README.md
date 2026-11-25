@@ -1,201 +1,221 @@
 
 # Student Management REST API
 
-A backend REST API built with **Python, FastAPI, SQLAlchemy, PostgreSQL, Pydantic, and Alembic** for managing students and departments.
+A backend REST API built using **Python, FastAPI, PostgreSQL, SQLAlchemy, and Pydantic**, featuring JWT authentication, role-based access control, database migrations, automated testing, and Docker support.
 
-This project was built as a learning-focused backend project to understand REST APIs, database integration, CRUD operations, relationships, validation, pagination, error handling, and database migrations.
+The project demonstrates practical backend development concepts, including REST API design, database relationships, CRUD operations, validation, authentication, authorization, error handling, and containerization.
 
 ## Features
 
-* Student CRUD operations
-* Department CRUD operations
-* PostgreSQL database integration
-* SQLAlchemy ORM
-* Pydantic request and response validation
-* Student–Department relationship
-* Unique email validation
-* Course and minimum-age filtering
-* Pagination
-* Partial student updates
-* Proper HTTP status codes
-* Database error handling
-* Alembic database migrations
-* JWT authentication — currently being implemented
+- Student CRUD operations
+- Department management
+- PostgreSQL database integration
+- SQLAlchemy ORM
+- Pydantic request and response validation
+- Student–Department relationship
+- Unique email constraint
+- Course and minimum-age filtering
+- Pagination
+- Partial student updates
+- JWT-based authentication
+- Password hashing
+- Role-based access control (Admin/User)
+- Protected API endpoints
+- Alembic database migrations
+- Automated tests using pytest
+- Docker and Docker Compose support
 
 ## Tech Stack
 
-* **Python**
-* **FastAPI**
-* **Pydantic**
-* **SQLAlchemy**
-* **PostgreSQL**
-* **Alembic**
-* **psycopg**
-* **python-dotenv**
-* **Git & GitHub**
+| Technology   | Purpose                      |
+| ------------ | ---------------------------- |
+| Python       | Backend programming          |
+| FastAPI      | REST API framework           |
+| PostgreSQL   | Relational database          |
+| SQLAlchemy   | ORM and database operations  |
+| Pydantic     | Data validation              |
+| Alembic      | Database migrations          |
+| PyJWT        | JWT authentication           |
+| pwdlib       | Password hashing             |
+| pytest       | Automated testing            |
+| Docker       | Application containerization |
+| Git & GitHub | Version control              |
 
 ## Project Structure
 
 ```text
-student_Crud_api/
+student-management-api/
 │
 ├── alembic/
-│   ├── versions/
-│   └── env.py
+│   └── versions/
 │
-├── .env
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py
+│   └── test_basic.py
+│
+├── .dockerignore
 ├── .gitignore
 ├── alembic.ini
+├── compose.yaml
 ├── database.py
+├── Dockerfile
 ├── main.py
 ├── models.py
 ├── schemas.py
-├── README.md
-└── student.db
+├── security.py
+├── requirements.txt
+└── README.md
 ```
-
-> `.env`, `student.db`, `.venv`, and Python cache files should not be committed to GitHub.
-
-## API Endpoints
-
-### Students
-
-| Method | Endpoint                   | Description                                |
-| ------ | -------------------------- | ------------------------------------------ |
-| POST   | `/students`              | Create a student                           |
-| GET    | `/students`              | Get students with filtering and pagination |
-| GET    | `/students/{student_id}` | Get a student by ID                        |
-| PUT    | `/students/{student_id}` | Partially update a student                 |
-| DELETE | `/students/{student_id}` | Delete a student                           |
-
-### Departments
-
-| Method | Endpoint                         | Description            |
-| ------ | -------------------------------- | ---------------------- |
-| POST   | `/departments`                 | Create a department    |
-| GET    | `/departments`                 | Get all departments    |
-| GET    | `/departments/{department_id}` | Get a department by ID |
 
 ## Database Design
 
-The project uses two main tables:
+The application uses three main database tables:
 
 ### Department
 
-* `id`
-* `name`
+- `id`
+- `name`
 
 ### Student
 
-* `id`
-* `name`
-* `age`
-* `course`
-* `email`
-* `department_id`
+- `id`
+- `name`
+- `age`
+- `course`
+- `email`
+- `department_id`
 
-A department can have multiple students.
+### User
 
-```text
-Department
-    │
-    │ 1
-    │
-    └──────────< Student
-                    │
-                    └── department_id
+- `id`
+- `name`
+- `email`
+- `password_hash`
+- `role`
+
+A department can have multiple students. The relationship is implemented using SQLAlchemy foreign keys and relationships.
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint      | Description                  | Access |
+| ------ | ------------- | ---------------------------- | ------ |
+| POST   | `/register` | Register a new user          | Public |
+| POST   | `/login`    | Authenticate and receive JWT | Public |
+
+### Students
+
+| Method | Endpoint                   | Description                               | Access        |
+| ------ | -------------------------- | ----------------------------------------- | ------------- |
+| POST   | `/students`              | Create a student                          | Admin         |
+| GET    | `/students`              | List students with filters and pagination | Authenticated |
+| GET    | `/students/{student_id}` | Get a student by ID                       | Authenticated |
+| PUT    | `/students/{student_id}` | Update a student                          | Admin         |
+| DELETE | `/students/{student_id}` | Delete a student                          | Admin         |
+
+### Departments
+
+| Method | Endpoint                         | Description            | Access        |
+| ------ | -------------------------------- | ---------------------- | ------------- |
+| POST   | `/departments`                 | Create a department    | Admin         |
+| GET    | `/departments`                 | List departments       | Authenticated |
+| GET    | `/departments/{department_id}` | Get a department by ID | Authenticated |
+
+## Authentication and Authorization
+
+The application uses JWT-based authentication.
+
+Authentication flow:
+
+1. A user registers with their name, email, and password.
+2. The password is securely hashed before being stored.
+3. The user logs in with their credentials.
+4. The server verifies the credentials.
+5. A JWT access token is generated.
+6. The client sends the token with protected API requests.
+
+Authorization is implemented using role-based access control.
+
+Two roles are supported:
+
+- **User:** Can access protected read-only endpoints.
+- **Admin:** Can access read endpoints and perform student and department write operations.
+
+Newly registered users receive the `user` role by default. Public registration does not allow users to assign themselves the admin role.
+
+Protected requests use the following header:
+
+```http
+Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
-
-The relationship is implemented using a SQLAlchemy `ForeignKey` and `relationship()`.
-
-## Validation
-
-The API uses Pydantic to validate incoming data.
-
-Examples:
-
-* Student age must be greater than `0`
-* Student age cannot exceed `100`
-* Email must be a valid email format
-* Department ID must reference an existing department
-* Student email must be unique
-
-Invalid request data results in appropriate HTTP errors such as `422`.
 
 ## Filtering and Pagination
 
 The student listing endpoint supports:
 
-* Course filtering
-* Minimum age filtering
-* Page number
-* Page size
+- Course filtering
+- Minimum age filtering
+- Page number
+- Page size
 
 Example:
 
-```text
+```http
 GET /students?course=CSE&min_age=18&page=1&limit=10
 ```
 
-The response includes:
+## Validation and Error Handling
 
-* Current page
-* Page limit
-* Total number of matching students
-* Student records
+Pydantic validates incoming request data.
 
-## Error Handling
+Examples:
 
-The API handles common database and request errors, including:
+- Student age must be greater than zero.
+- Student age cannot exceed 100.
+- Email must have a valid format.
+- Department ID must reference an existing department.
+- Student email must be unique.
 
-* `404` — Resource not found
-* `400` — Invalid database-related request
-* `409` — Duplicate student email
-* `422` — Request validation error
-* `204` — Successful deletion with no response body
-* `201` — Successfully created resource
+The API uses appropriate HTTP status codes, including:
 
-Database transactions are handled using SQLAlchemy sessions with `commit()` and `rollback()` where appropriate.
+| Status | Meaning                            |
+| ------ | ---------------------------------- |
+| 200    | Successful request                 |
+| 201    | Resource created                   |
+| 204    | Successful deletion                |
+| 400    | Invalid request                    |
+| 401    | Authentication required or invalid |
+| 403    | Insufficient permissions           |
+| 404    | Resource not found                 |
+| 409    | Duplicate student email            |
+| 422    | Request validation error           |
 
 ## Database Migrations
 
-**Alembic** is used to manage database schema changes.
+Alembic manages database schema changes.
 
-Instead of creating database tables automatically every time the application starts, schema changes are tracked through migration files.
+The migration history includes:
 
-Example:
+- Initial students table
+- Unique email constraint
+- Departments and student relationship
+- Users table
+- User role column
+
+Apply migrations using:
 
 ```bash
 alembic upgrade head
 ```
 
-This applies the latest database migrations.
+## Running with Docker
 
-## Authentication
+### Prerequisites
 
-JWT authentication is currently being implemented.
-
-The planned authentication flow is:
-
-```text
-Register
-   ↓
-Hash Password
-   ↓
-Login
-   ↓
-Verify Credentials
-   ↓
-Generate JWT
-   ↓
-Client Receives Token
-   ↓
-Client Sends Token With Protected Requests
-   ↓
-Server Verifies Token
-```
-
-## Running the Project
+- Git
+- Docker Desktop or Docker Engine with Docker Compose
 
 ### 1. Clone the repository
 
@@ -204,72 +224,146 @@ git clone https://github.com/Arunyadav009/student-management-api.git
 cd student-management-api
 ```
 
-### 2. Create and activate a virtual environment
+### 2. Configure environment variables
+
+Create a `.env` file in the project root:
+
+```env
+POSTGRES_PASSWORD=your_secure_database_password
+SECRET_KEY=your_secret_key
+```
+
+Generate a secure JWT secret key using Python:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+Use the generated value for `SECRET_KEY`.
+
+### 3. Build and start the containers
+
+```bash
+docker compose up --build -d
+```
+
+This starts the FastAPI application and PostgreSQL database.
+
+### 4. Apply database migrations
+
+```bash
+docker compose exec api alembic upgrade head
+```
+
+### 5. Verify running containers
+
+```bash
+docker compose ps
+```
+
+### 6. Access the application
+
+API:
+
+```text
+http://localhost:8000
+```
+
+Interactive Swagger documentation:
+
+```text
+http://localhost:8000/docs
+```
+
+Stop the containers:
+
+```bash
+docker compose down
+```
+
+To stop containers and remove the PostgreSQL data volume:
+
+```bash
+docker compose down -v
+```
+
+**Warning:** The second command permanently deletes the database data stored in the Compose volume.
+
+## Running Locally
+
+### 1. Create a virtual environment
 
 ```bash
 python -m venv .venv
 ```
 
-Windows:
+Activate it on Windows:
 
-```bash
+```powershell
 .venv\Scripts\activate
 ```
 
-### 3. Install dependencies
-
-The project currently does not include a dependency file, so install the required packages manually:
+### 2. Install dependencies
 
 ```bash
-pip install fastapi uvicorn sqlalchemy psycopg alembic python-dotenv pydantic email-validator
+pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
+### 3. Configure environment variables
 
-Create a `.env` file and add your PostgreSQL database URL:
+Create a `.env` file with your PostgreSQL connection string and JWT secret:
 
 ```env
-DATABASE_URL=your_database_url
+DATABASE_URL=postgresql+psycopg://username:password@localhost:5432/student_management
+TEST_DATABASE_URL=postgresql+psycopg://username:password@localhost:5432/student_management_test
+SECRET_KEY=your_secret_key
 ```
 
-Do not commit `.env` or database credentials to GitHub.
+The test database must be created separately. Keep it separate from your development or production database because the test fixtures create and drop database tables.
 
-### 5. Run database migrations
+### 4. Apply migrations
 
 ```bash
 alembic upgrade head
 ```
 
-### 6. Start the FastAPI server
+### 5. Start the application
 
 ```bash
 uvicorn main:app --reload
 ```
 
-The API will be available locally at:
+The application will run at:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-Interactive API documentation is available at:
+## Running Automated Tests
 
-```text
-http://127.0.0.1:8000/docs
+Run the test suite using:
+
+```bash
+pytest -v
 ```
 
-## Future Improvements
+The tests cover API functionality and role-based access control.
 
-* Complete JWT authentication
-* Add password hashing
-* Add automated tests with pytest
-* Dockerize the application
-* Add more advanced filtering and sorting
-* Improve test coverage
-* Add role-based authorization
+Latest verified result: **23 tests passed.**
+
+## Security and Configuration
+
+- Database credentials and JWT secrets are stored in environment variables.
+- `.env` is excluded from Git.
+- Passwords are stored as hashes rather than plaintext.
+- JWT tokens are validated before protected operations.
+- Public registration cannot assign administrative privileges.
+- Administrative operations require the admin role.
 
 ## Author
 
 **Arun Yadav**
 
-GitHub: Arunyadav009
+GitHub: [Arunyadav009](https://github.com/Arunyadav009)
+
+Project Repository: [Student Management REST API](https://github.com/Arunyadav009/student-management-api)
