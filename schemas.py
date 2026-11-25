@@ -43,4 +43,19 @@ class StudentUpdate(BaseModel):
     course: str | None = None
     email: EmailStr | None = None
     
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    password: str
 
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    role: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str

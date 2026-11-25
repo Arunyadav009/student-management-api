@@ -1,7 +1,7 @@
 """add unique constraint to student email
 
 Revision ID: 9fb4fc398ac4
-Revises: 
+Revises: 1c2d3e4f5a6b
 Create Date: 2026-09-17 11:09:55.388771
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '9fb4fc398ac4'
-down_revision: Union[str, Sequence[str], None] = None
+down_revision: Union[str, Sequence[str], None] = "1c2d3e4f5a6b"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
